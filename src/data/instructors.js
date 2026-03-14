@@ -1,0 +1,16 @@
+export const instructors = [
+  { name: 'Dr. Md. Ashikur Rahman Khan', designation: 'Professor' },
+  { name: 'Dr. Abidur Rahaman', designation: 'Professor' },
+  { name: 'Zayed- Us- Salehin', designation: 'Assistant Professor' },
+  { name: 'Dr. Mohammad Amzad Hossain', designation: 'Associate Professor' },
+  { name: 'Sultana Jahan Soheli', designation: 'Assistant Professor' },
+  { name: 'Dr. Md. Masudur Rahman', designation: 'Associate Professor' },
+  { name: 'Tanvir Zaman Khan', designation: 'Assistant Professor' },
+  { name: 'Dr. Apurba Adhikary', designation: 'Associate Professor' },
+  { name: 'Dr. Main Uddin', designation: 'Associate Professor' },
+  { name: 'Md. Bipul Hossain', designation: 'Assistant Professor' },
+  { name: 'Md. Mahbubul Alam', designation: 'Assistant Professor' },
+  { name: 'Md. Sabbir Ejaz', designation: 'Assistant Professor' },
+  { name: 'Mohammad Kamrul Hasan', designation: 'Assistant Professor' },
+  { name: 'Ishtiaq Ahammad', designation: 'Lecturer' },
+]
