@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -52,34 +52,37 @@ export default function CoverPageGenerator() {
     const el = previewRef.current;
     if (!el) return;
 
-    // Remove outer border/radius for clean PDF edge (inner border box is part of design)
-    const origBorder = el.style.border;
-    const origRadius = el.style.borderRadius;
-    el.style.border = "none";
-    el.style.borderRadius = "0";
+    // Clone preview off-screen at full A4 size so CSS scale doesn't affect capture
+    const clone = el.cloneNode(true);
+    Object.assign(clone.style, {
+      position: "fixed",
+      left: "-9999px",
+      top: "0",
+      width: "595px",
+      maxWidth: "595px",
+      border: "none",
+      borderRadius: "0",
+      transform: "none",
+    });
+    document.body.appendChild(clone);
 
-    // Capture at natural size (preserves exact preview layout)
     const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
       import("html2canvas"),
       import("jspdf"),
     ]);
 
-    const canvas = await html2canvas(el, {
+    const canvas = await html2canvas(clone, {
       scale: 3,
       useCORS: true,
       letterRendering: true,
     });
 
-    // Place captured image scaled to fill entire A4 page
-    // Element already has 210:297 aspect ratio so no distortion
+    document.body.removeChild(clone);
+
     const imgData = canvas.toDataURL("image/jpeg", 0.98);
     const pdf = new jsPDF("portrait", "mm", "a4");
     pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
     pdf.save(`Cover_Page_${formValues.name || "NSTU"}.pdf`);
-
-    // Restore styles
-    el.style.border = origBorder;
-    el.style.borderRadius = origRadius;
   }, [formValues.name]);
 
   const previewData = {
@@ -353,16 +356,10 @@ export default function CoverPageGenerator() {
                 <div style={{ flex: 1, height: 1, background: "#EEF3F9" }} />
               </div>
 
-              {/* Preview with paper bg */}
-              <div
-                style={{
-                  background: "#F0F4F8",
-                  borderRadius: 14,
-                  padding: 14,
-                }}
-              >
+              {/* Preview with scale-to-fit */}
+              <ScaledPreview>
                 <CoverPagePreview ref={previewRef} data={previewData} />
-              </div>
+              </ScaledPreview>
             </div>
 
             {/* Download */}
@@ -480,6 +477,55 @@ function Section({ num, title, children, last }) {
         </span>
       </div>
       {children}
+    </div>
+  );
+}
+
+function ScaledPreview({ children }) {
+  const containerRef = useRef(null);
+  const [scale, setScale] = useState(1);
+  const PREVIEW_WIDTH = 595;
+  const PREVIEW_HEIGHT = PREVIEW_WIDTH * (297 / 210);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0].contentRect.width;
+      setScale(Math.min(width / PREVIEW_WIDTH, 1));
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        background: "#F0F4F8",
+        borderRadius: 14,
+        padding: 14,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          height: PREVIEW_HEIGHT * scale,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            width: PREVIEW_WIDTH,
+            transformOrigin: "top center",
+            transform: `scale(${scale})`,
+            flexShrink: 0,
+          }}
+        >
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
